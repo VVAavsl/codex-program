@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -35,6 +36,11 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
     private static final int[] MINE_COUNTS = {10, 40, 99};
     private static final String[] DIFF_LABELS = {"初级", "中级", "高级"};
 
+    public static final String EXTRA_USERNAME = "extra_username";
+    public static final String EXTRA_AVATAR_EMOJI = "extra_avatar_emoji";
+    public static final String EXTRA_AVATAR_COLOR = "extra_avatar_color";
+
+
     private static final String KEY_DIFF = "difficulty";
     private static final String KEY_PLACED = "placed";
     private static final String KEY_MINES = "mines";
@@ -57,6 +63,8 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
     private GridAdapter adapter;
     private GameTimer timer;
     private SharedPrefsManager prefs;
+    private AccountManager accountManager;
+    private UserInfoBar userInfoBar;
 
     private int difficulty = DIFF_EASY;
     private int cellSizePx = 40;
@@ -74,6 +82,10 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        accountManager = new AccountManager(this);
+        userInfoBar = findViewById(R.id.userInfoBar);
+        setupUserBar();
 
         prefs = new SharedPrefsManager(this);
         timer = new GameTimer();
@@ -212,6 +224,47 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
         field.cycleMark(row, col);
         adapter.refreshAll();
         updateMinesLabel();
+    }
+
+    // ---------- 用户信息 ----------
+
+    private void setupUserBar() {
+        String name = getIntent().getStringExtra(EXTRA_USERNAME);
+        String emoji = getIntent().getStringExtra(EXTRA_AVATAR_EMOJI);
+        int color = getIntent().getIntExtra(EXTRA_AVATAR_COLOR, -1);
+        if ((name == null || name.isEmpty()) && accountManager.isLoggedIn()) {
+            name = accountManager.getSessionUsername();
+            emoji = accountManager.getSessionEmoji();
+            color = accountManager.getSessionColor();
+        }
+        if (name == null || name.isEmpty()) {
+            name = "未登录";
+        }
+        if (emoji == null || emoji.isEmpty()) {
+            emoji = "\uD83D\uDC64";
+        }
+        if (color == -1) {
+            color = 0xFFBDBDBD;
+        }
+        userInfoBar.setUser(name, emoji, color, "已登录 · 开始扫雷");
+        userInfoBar.clearActions();
+        userInfoBar.addAction("好友", v -> startActivity(new Intent(this, FriendActivity.class)));
+        userInfoBar.addAction("退出", 0xFFC62828, v -> confirmLogout());
+    }
+
+    private void confirmLogout() {
+        new AlertDialog.Builder(this)
+                .setTitle("退出登录")
+                .setMessage("确定退出当前账号吗？")
+                .setPositiveButton("退出", (d, w) -> {
+                    accountManager.clearSession();
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     // ---------- 显示更新 ----------

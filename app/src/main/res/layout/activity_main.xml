@@ -8,6 +8,14 @@
     android:background="@android:color/white"
     tools:context=".MainActivity">
 
+    <com.example.myapplication.UserInfoBar
+        android:id="@+id/userInfoBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"
@@ -20,7 +28,7 @@
         android:paddingBottom="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/userInfoBar">
 
         <TextView
             android:id="@+id/tvDifficulty"

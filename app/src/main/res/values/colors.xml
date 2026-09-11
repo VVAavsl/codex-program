@@ -2,4 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="avatar_select">#FF1E88E5</color>
+    <color name="user_action">#FF1565C0</color>
+    <color name="user_action_danger">#FFC62828</color>
+    <color name="user_bar_bg">#FFF5F5F5</color>
 </resources>
