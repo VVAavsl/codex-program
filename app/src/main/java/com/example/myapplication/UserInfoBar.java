@@ -49,9 +49,18 @@ public class UserInfoBar extends LinearLayout {
         actionContainer = findViewById(R.id.actionContainer);
     }
 
-    /** 显示某用户：头像 + 昵称 + 副标题。 */
+    /** 显示某用户：头像 + 昵称 + 副标题（内置表情头像）。 */
     public void setUser(String name, String emoji, int color, String subtitle) {
-        avatarView.setAvatar(emoji, color);
+        setUser(name, emoji, color, "", subtitle);
+    }
+
+    /** 显示某用户：imageUri 非空时优先使用相册图片头像。 */
+    public void setUser(String name, String emoji, int color, String imageUri, String subtitle) {
+        if (imageUri != null && !imageUri.isEmpty()) {
+            avatarView.setImageUri(imageUri);
+        } else {
+            avatarView.setAvatar(emoji, color);
+        }
         tvName.setText(name == null || name.isEmpty() ? "未登录" : name);
         tvSub.setText(subtitle == null ? "" : subtitle);
     }

@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
     public static final String EXTRA_USERNAME = "extra_username";
     public static final String EXTRA_AVATAR_EMOJI = "extra_avatar_emoji";
     public static final String EXTRA_AVATAR_COLOR = "extra_avatar_color";
+    public static final String EXTRA_AVATAR_URI = "extra_avatar_uri";
 
 
     private static final String KEY_DIFF = "difficulty";
@@ -232,10 +233,12 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
         String name = getIntent().getStringExtra(EXTRA_USERNAME);
         String emoji = getIntent().getStringExtra(EXTRA_AVATAR_EMOJI);
         int color = getIntent().getIntExtra(EXTRA_AVATAR_COLOR, -1);
+        String imageUri = getIntent().getStringExtra(EXTRA_AVATAR_URI);
         if ((name == null || name.isEmpty()) && accountManager.isLoggedIn()) {
             name = accountManager.getSessionUsername();
             emoji = accountManager.getSessionEmoji();
             color = accountManager.getSessionColor();
+            imageUri = accountManager.getSessionAvatarUri();
         }
         if (name == null || name.isEmpty()) {
             name = "未登录";
@@ -246,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements GridAdapter.OnCel
         if (color == -1) {
             color = 0xFFBDBDBD;
         }
-        userInfoBar.setUser(name, emoji, color, "已登录 · 开始扫雷");
+        userInfoBar.setUser(name, emoji, color, imageUri, "已登录 · 开始扫雷");
         userInfoBar.clearActions();
         userInfoBar.addAction("好友", v -> startActivity(new Intent(this, FriendActivity.class)));
         userInfoBar.addAction("退出", 0xFFC62828, v -> confirmLogout());

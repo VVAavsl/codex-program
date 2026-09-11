@@ -81,6 +81,24 @@
                 android:columnCount="4" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="从相册选择头像" />
+
+            <TextView
+                android:id="@+id/tvAvatarState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:text="已选择相册头像，将作为你的头像"
+                android:textColor="#FF2E7D32"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

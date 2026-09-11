@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,7 +10,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-/** 好友列表适配器：ListView 数据源。 */
+/** 好友列表适配器：ListView 数据源，支持相册头像。 */
 public class FriendAdapter extends BaseAdapter {
 
     private final LayoutInflater inflater;
@@ -32,7 +33,7 @@ public class FriendAdapter extends BaseAdapter {
 
     @Override
     public long getItemId(int position) {
-        return position;
+        return friends.get(position).id;
     }
 
     @Override
@@ -51,7 +52,11 @@ public class FriendAdapter extends BaseAdapter {
         }
 
         Friend f = getItem(position);
-        holder.avatar.setAvatar(f.emoji, f.color);
+        if (f.imageUri != null && !f.imageUri.isEmpty()) {
+            holder.avatar.setImageUri(f.imageUri);
+        } else {
+            holder.avatar.setAvatar(f.emoji, f.color);
+        }
         holder.name.setText(f.name);
         holder.signature.setText(f.signature);
         if (f.online) {

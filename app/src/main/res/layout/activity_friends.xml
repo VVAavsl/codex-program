@@ -11,17 +11,43 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="2dp">
+
+        <TextView
+            android:id="@+id/tvFriendTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="我的好友"
+            android:textColor="#FF555555"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddFriend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:text="添加好友"
+            android:textSize="13sp" />
+    </LinearLayout>
+
     <TextView
-        android:id="@+id/tvFriendTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="4dp"
-        android:text="我的好友"
-        android:textColor="#FF555555"
-        android:textSize="14sp" />
+        android:paddingBottom="6dp"
+        android:text="长按好友可删除"
+        android:textColor="#FF999999"
+        android:textSize="12sp" />
 
     <ListView
         android:id="@+id/friendList"

@@ -21,10 +21,12 @@ public class AccountManager {
     private static final String KEY_SESSION_USER = "session_user";
     private static final String KEY_SESSION_EMOJI = "session_emoji";
     private static final String KEY_SESSION_COLOR = "session_color";
+    private static final String KEY_SESSION_URI = "session_uri";
 
     private static final String FIELD_PWD = "pwd";
     private static final String FIELD_EMOJI = "emoji";
     private static final String FIELD_COLOR = "color";
+    private static final String FIELD_URI = "uri";
 
     private final SharedPreferences sp;
 
@@ -36,7 +38,7 @@ public class AccountManager {
     private void ensureDemoAccount() {
         if (!accountExists("demo")) {
             // 仅创建演示账号，不写入登录会话
-            createAccount("demo", "123456", Avatars.emojiAt(0), Avatars.colorAt(0));
+            createAccount("demo", "123456", Avatars.emojiAt(0), Avatars.colorAt(0), "");
         }
     }
 
@@ -57,16 +59,16 @@ public class AccountManager {
         return accounts().has(username);
     }
 
-    public int register(String username, String password, String emoji, int color) {
-        int result = createAccount(username, password, emoji, color);
+    public int register(String username, String password, String emoji, int color, String imageUri) {
+        int result = createAccount(username, password, emoji, color, imageUri);
         if (result == RESULT_OK) {
-            saveSession(username, emoji, color);
+            saveSession(username, emoji, color, imageUri);
         }
         return result;
     }
 
     /** 只创建账号，不写登录会话（供演示账号预置等场景使用）。 */
-    private int createAccount(String username, String password, String emoji, int color) {
+    private int createAccount(String username, String password, String emoji, int color, String imageUri) {
         JSONObject all = accounts();
         if (all.has(username)) {
             return RESULT_NAME_EXISTS;
@@ -76,6 +78,7 @@ public class AccountManager {
             acc.put(FIELD_PWD, password);
             acc.put(FIELD_EMOJI, emoji);
             acc.put(FIELD_COLOR, color);
+            acc.put(FIELD_URI, imageUri == null ? "" : imageUri);
             all.put(username, acc);
             saveAccounts(all);
             return RESULT_OK;
@@ -88,7 +91,7 @@ public class AccountManager {
      * 登录：校验密码，成功后把本次选择的头像同步到该账号，
      * 并把用户名 + 头像写入会话，供扫雷游戏显示。
      */
-    public int login(String username, String password, String emoji, int color) {
+    public int login(String username, String password, String emoji, int color, String imageUri) {
         JSONObject all = accounts();
         if (!all.has(username)) {
             return RESULT_NOT_FOUND;
@@ -100,9 +103,10 @@ public class AccountManager {
             }
             acc.put(FIELD_EMOJI, emoji);
             acc.put(FIELD_COLOR, color);
+            acc.put(FIELD_URI, imageUri == null ? "" : imageUri);
             all.put(username, acc);
             saveAccounts(all);
-            saveSession(username, emoji, color);
+            saveSession(username, emoji, color, imageUri);
             return RESULT_OK;
         } catch (Exception e) {
             return RESULT_NOT_FOUND;
@@ -110,10 +114,15 @@ public class AccountManager {
     }
 
     public void saveSession(String username, String emoji, int color) {
+        saveSession(username, emoji, color, "");
+    }
+
+    public void saveSession(String username, String emoji, int color, String imageUri) {
         sp.edit()
                 .putString(KEY_SESSION_USER, username)
                 .putString(KEY_SESSION_EMOJI, emoji)
                 .putInt(KEY_SESSION_COLOR, color)
+                .putString(KEY_SESSION_URI, imageUri == null ? "" : imageUri)
                 .apply();
     }
 
@@ -134,7 +143,12 @@ public class AccountManager {
         return sp.getInt(KEY_SESSION_COLOR, Avatars.colorAt(0));
     }
 
+    public String getSessionAvatarUri() {
+        return sp.getString(KEY_SESSION_URI, "");
+    }
+
     public void clearSession() {
-        sp.edit().remove(KEY_SESSION_USER).remove(KEY_SESSION_EMOJI).remove(KEY_SESSION_COLOR).apply();
+        sp.edit().remove(KEY_SESSION_USER).remove(KEY_SESSION_EMOJI)
+                .remove(KEY_SESSION_COLOR).remove(KEY_SESSION_URI).apply();
     }
 }

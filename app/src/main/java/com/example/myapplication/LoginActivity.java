@@ -1,10 +1,10 @@
 package com.example.myapplication;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.GridLayout;
@@ -12,6 +12,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -22,7 +24,7 @@ import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
 import java.util.List;
 
-/** 登录/注册界面：用户名 + 密码 + 头像选择，成功后把用户信息传入扫雷游戏。 */
+/** 登录/注册界面：用户名 + 密码 + 头像选择（内置头像或相册上传）。 */
 public class LoginActivity extends AppCompatActivity {
 
     private EditText etUsername;
@@ -30,14 +32,20 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvError;
     private TextView tvToggle;
     private TextView tvHint;
+    private TextView tvAvatarState;
     private MaterialButton btnLogin;
+    private MaterialButton btnPickAvatar;
     private UserInfoBar userInfoBar;
     private GridLayout avatarGrid;
 
     private final List<CircleAvatarView> avatarViews = new ArrayList<>();
+    private final ActivityResultLauncher<String[]> galleryLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onAvatarPicked);
+
     private AccountManager accountManager;
     private boolean registerMode = false;
     private int selectedAvatar = 0;
+    private String pickedAvatarUri = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +65,6 @@ public class LoginActivity extends AppCompatActivity {
         updatePreview();
         updateModeUi();
 
-        // 已登录则直接进入游戏
         if (accountManager.isLoggedIn() && savedInstanceState == null) {
             enterGame();
         }
@@ -69,7 +76,9 @@ public class LoginActivity extends AppCompatActivity {
         tvError = findViewById(R.id.tvError);
         tvToggle = findViewById(R.id.tvToggle);
         tvHint = findViewById(R.id.tvHint);
+        tvAvatarState = findViewById(R.id.tvAvatarState);
         btnLogin = findViewById(R.id.btnLogin);
+        btnPickAvatar = findViewById(R.id.btnPickAvatar);
         userInfoBar = findViewById(R.id.userInfoBar);
         avatarGrid = findViewById(R.id.avatarGrid);
     }
@@ -98,20 +107,38 @@ public class LoginActivity extends AppCompatActivity {
 
     private void selectAvatar(int index) {
         selectedAvatar = index;
+        pickedAvatarUri = "";
+        tvAvatarState.setVisibility(View.GONE);
         for (int i = 0; i < avatarViews.size(); i++) {
             avatarViews.get(i).setHighlight(i == index);
         }
         updatePreview();
     }
 
+    /** 相册选图回调：保存持久化读取权限并立即预览。 */
+    private void onAvatarPicked(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+        try {
+            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) {
+        }
+        pickedAvatarUri = uri.toString();
+        for (CircleAvatarView av : avatarViews) {
+            av.setHighlight(false);
+        }
+        tvAvatarState.setVisibility(View.VISIBLE);
+        updatePreview();
+    }
+
     private void setupListeners() {
         btnLogin.setOnClickListener(v -> submit());
-
+        btnPickAvatar.setOnClickListener(v -> galleryLauncher.launch(new String[]{"image/*"}));
         tvToggle.setOnClickListener(v -> {
             registerMode = !registerMode;
             updateModeUi();
         });
-
         etUsername.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int st, int c, int a) {
@@ -148,8 +175,11 @@ public class LoginActivity extends AppCompatActivity {
             name = "用户名";
         }
         String sub = registerMode ? "新用户 · 选择头像注册" : "登录后开始扫雷";
-        userInfoBar.setUser(name, Avatars.emojiAt(selectedAvatar),
-                Avatars.colorAt(selectedAvatar), sub);
+        if (!pickedAvatarUri.isEmpty()) {
+            userInfoBar.setUser(name, "", 0, pickedAvatarUri, sub);
+        } else {
+            userInfoBar.setUser(name, Avatars.emojiAt(selectedAvatar), Avatars.colorAt(selectedAvatar), null, sub);
+        }
     }
 
     private void showError(String message) {
@@ -173,15 +203,17 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        String emoji = Avatars.emojiAt(selectedAvatar);
+        int color = Avatars.colorAt(selectedAvatar);
         int result;
         if (registerMode) {
-            result = accountManager.register(name, pwd, Avatars.emojiAt(selectedAvatar), Avatars.colorAt(selectedAvatar));
+            result = accountManager.register(name, pwd, emoji, color, pickedAvatarUri);
             if (result == AccountManager.RESULT_NAME_EXISTS) {
                 showError("该用户名已存在，请直接登录");
                 return;
             }
         } else {
-            result = accountManager.login(name, pwd, Avatars.emojiAt(selectedAvatar), Avatars.colorAt(selectedAvatar));
+            result = accountManager.login(name, pwd, emoji, color, pickedAvatarUri);
             if (result == AccountManager.RESULT_NOT_FOUND) {
                 showError("账号不存在，可点击下方“注册新用户”创建");
                 return;
@@ -200,6 +232,7 @@ public class LoginActivity extends AppCompatActivity {
         intent.putExtra(MainActivity.EXTRA_USERNAME, accountManager.getSessionUsername());
         intent.putExtra(MainActivity.EXTRA_AVATAR_EMOJI, accountManager.getSessionEmoji());
         intent.putExtra(MainActivity.EXTRA_AVATAR_COLOR, accountManager.getSessionColor());
+        intent.putExtra(MainActivity.EXTRA_AVATAR_URI, accountManager.getSessionAvatarUri());
         startActivity(intent);
         finish();
     }
